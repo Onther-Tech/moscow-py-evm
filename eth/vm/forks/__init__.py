@@ -13,3 +13,7 @@ from .spurious_dragon import (  # noqa: F401
 from .byzantium import (  # noqa: F401
     ByzantiumVM,
 )
+
+from .moscow import (
+    MoscowVM,
+)
