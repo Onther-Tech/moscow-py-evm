@@ -33,6 +33,16 @@ from .transaction_context import (  # noqa: F401
 )
 from .validation import validate_frontier_transaction
 
+# set param for Stamina
+from eth_typing import Address
+STAMINA =  Address(b'\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x02')
+
+from eth.vm.stamina import(
+    getDelegate,
+    getStamina,
+    addStamina,
+    subtractStamina
+)
 
 class FrontierTransactionExecutor(BaseTransactionExecutor):
 
@@ -49,8 +59,22 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
         transaction_context = self.get_transaction_context(transaction)
         gas_fee = transaction.gas * transaction_context.gas_price
 
+
         # Buy Gas
         self.vm_state.account_db.delta_balance(transaction.sender, -1 * gas_fee)
+
+        # delegate gas fee to Stamina
+        # self.vm_state.account_db.delta_balance(STAMINA, -1 * gas_fee)
+
+
+
+        # check if caller has delegate
+        # if(get_delegate()):
+        #     getStamina())
+        #     subtractStamina())
+        #
+        # else:
+        #     pass
 
         # Increment Nonce
         self.vm_state.account_db.increment_nonce(transaction.sender)
@@ -150,8 +174,15 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
                 encode_hex(computation.msg.sender),
             )
 
-            self.vm_state.account_db.delta_balance(computation.msg.sender, gas_refund_amount)
 
+        self.vm_state.account_db.delta_balance(computation.msg.sender, gas_refund_amount)
+
+        # send gas refund to Stamina
+        # self.vm_state.account_db.delta_balance(STAMINA, gas_refund_amount)
+        #
+        # if(get_delegate()) :
+        #     addStamina()
+        #
         # Miner Fees
         transaction_fee = \
             (transaction.gas - gas_remaining - gas_refund) * transaction.gas_price
