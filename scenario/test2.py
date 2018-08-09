@@ -57,7 +57,7 @@ tx = vm.create_unsigned_transaction(
     gas_price=0,
     gas=100000,
     to=RECEIVER,
-    value=0,
+    value=10 ** 18,
     data=b'',
 )
 
@@ -78,5 +78,7 @@ nonce, mix_hash = mine_pow_nonce(
     block.header.difficulty)
 
 block = chain.mine_block(mix_hash=mix_hash, nonce=nonce)
+vm = chain.get_vm()
 
 print("SENDER BALANCE : {}".format(vm.state.account_db.get_balance(SENDER)))
+print("RECEIVER BALANCE : {}".format(vm.state.account_db.get_balance(RECEIVER)))
