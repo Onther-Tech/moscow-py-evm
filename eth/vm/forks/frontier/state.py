@@ -32,15 +32,36 @@ from .transaction_context import (  # noqa: F401
     FrontierTransactionContext
 )
 from .validation import validate_frontier_transaction
+from .stamina import (
+    get_delegatee,
+    get_stamina,
+    subtract_stamina,
+)
 
+# TODO: no expandability
+from eth.vm.forks.frontier.validation import (
+    validate_stamina_transaction,
+)
 
 class FrontierTransactionExecutor(BaseTransactionExecutor):
 
+    stamina = None
+    delegatee = None
+    delegatee_exist = None
+
     def validate_transaction(self, transaction):
+
+        # Get delegatee
+        self.delegatee = get_delegatee(self.vm_state, transaction.sender)
+        self.delegatee_exist = int(encode_hex(self.delegatee), 0)
 
         # Validate the transaction
         transaction.validate()
-        self.vm_state.validate_transaction(transaction)
+        if self.delegatee_exist:
+            self.stamina = get_stamina(self.vm_state, self.delegatee)
+            validate_stamina_transaction(self.vm_state.account_db, transaction, self.stamina)
+        else:
+            self.vm_state.validate_transaction(transaction)
 
         return transaction
 
@@ -49,7 +70,10 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
         gas_fee = transaction.gas * transaction.gas_price
 
         # Buy Gas
-        self.vm_state.account_db.delta_balance(transaction.sender, -1 * gas_fee)
+        if self.delegatee_exist:
+            subtract_stamina(self.vm_state, self.delegatee, gas_fee)
+        else:
+            self.vm_state.account_db.delta_balance(transaction.sender, -1 * gas_fee)
 
         # Increment Nonce
         self.vm_state.account_db.increment_nonce(transaction.sender)
