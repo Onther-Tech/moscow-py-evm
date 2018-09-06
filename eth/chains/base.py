@@ -812,8 +812,8 @@ class MiningChain(Chain):
         new_header, receipt, computation = vm.apply_transaction(base_block.header, transaction)
 
         # since we are building the block locally, we have to persist all the incremental state
+        # 여기 이전에서 무슨 차이가 발생했다!
         vm.state.account_db.persist()
-
         transactions = base_block.transactions + (transaction, )
         receipts = base_block.get_receipts(self.chaindb) + (receipt, )
 

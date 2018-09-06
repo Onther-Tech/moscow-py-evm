@@ -105,6 +105,7 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
         """Apply the message to the VM."""
         transaction_context = self.vm_state.get_transaction_context(transaction)
         if message.is_create:
+            print('11')
             is_collision = self.vm_state.account_db.account_has_code_or_nonce(
                 message.storage_address
             )

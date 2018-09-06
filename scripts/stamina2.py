@@ -53,7 +53,9 @@ from eth_utils import (
     decode_hex,
     to_int,
 )
-
+from eth_bloom import (
+    BloomFilter,
+)
 from eth.vm.transaction_context import (
     BaseTransactionContext
 )
@@ -401,11 +403,12 @@ def run() -> None:
     init_function(decode_hex(stamina_address), chain)
     initialized_function(decode_hex(stamina_address), chain)
     set_delegator_function(decode_hex(stamina_address), chain)
-    get_delegatee_function(decode_hex(stamina_address), chain)
-    deposit_function(decode_hex(stamina_address), chain)
-    get_stamina_function(decode_hex(stamina_address), chain)
-    substract_stamina_function(decode_hex(stamina_address), chain)
-    get_stamina_function(decode_hex(stamina_address), chain)
+
+    # get_delegatee_function(decode_hex(stamina_address), chain)
+    # deposit_function(decode_hex(stamina_address), chain)
+    # get_stamina_function(decode_hex(stamina_address), chain)
+    # substract_stamina_function(decode_hex(stamina_address), chain)
+    # get_stamina_function(decode_hex(stamina_address), chain)
 
 def init_function(addr: str, chain: MiningChain) -> None:
     w3_tx = stamina.functions.init(10, 20, 50).buildTransaction(W3_TX_DEFAULTS)
@@ -443,26 +446,56 @@ def initialized_function(addr: str, chain: MiningChain) -> None:
     assert to_int(computation.output) == 1
 
 def set_delegator_function(addr: str, chain: MiningChain) -> None:
+    w3_tx = stamina.functions.setDelegator(delegator).buildTransaction(W3_TX_DEFAULTS)
+    tx = new_transaction(
+        vm=chain.get_vm(),
+        private_key=FUNDED_ADDRESS_PRIVATE_KEY,
+        from_=FUNDED_ADDRESS,
+        to=addr,
+        amount=0,
+        gas=DEFAULT_GAS_LIMIT,
+        data=decode_hex(w3_tx['data']),
+    )
+
+    new_header, receipt, computation = chain.get_vm().apply_transaction(chain.header, tx)
+    chain.get_vm().state.account_db.persist()
+
+    assert computation.is_success
+    assert to_int(computation.output) == 1
+
+    transactions = chain.get_vm().block.transactions + (tx, )
+    receipts = chain.get_vm().block.get_receipts(chain.chaindb) + (receipt, )
+
+    new_block = chain.get_vm().set_block_transactions(chain.get_vm().block, new_header, transactions, receipts)
+
+    chain.header = new_block.header
+
     # w3_tx = stamina.functions.setDelegator(delegator).buildTransaction(W3_TX_DEFAULTS)
     #
-    # tx = new_transaction(
-    #     vm=chain.get_vm(),
-    #     private_key=FUNDED_ADDRESS_PRIVATE_KEY,
-    #     from_=FUNDED_ADDRESS,
-    #     to=addr,
-    #     amount=0,
-    #     gas=DEFAULT_GAS_LIMIT,
-    #     data=decode_hex(w3_tx['data']),
+    # vm_state = chain.get_vm().state
+    # contract_address = None
+    # # transaction_context = BaseTransactionContext(0, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    # transaction_context = vm_state.get_transaction_context_class()(
+    #     gas_price=0,
+    #     origin=FUNDED_ADDRESS,
     # )
     #
-    # block, receipt, computation = chain.apply_transaction(tx)
+    # # TODO: gas, sender
+    # message = Message(
+    #     gas=237320,
+    #     to=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xad',
+    #     sender=FUNDED_ADDRESS,
+    #     value=0,
+    #     data=decode_hex(w3_tx['data']),
+    #     code=code,
+    #     create_address=contract_address,
+    # )
     #
-    # assert computation.is_success
-    # assert to_int(computation.output) == 1
+    # computation = vm_state.get_computation(
+    #     message,
+    #     transaction_context).apply_message()
 
-    # TODO: transaciton에서 생성되는 message 그대로 가져와보자!
-
-    w3_tx = stamina.functions.setDelegator(delegator).buildTransaction(W3_TX_DEFAULTS)
+    w3_tx = stamina.functions.getDelegatee(delegator).buildTransaction(W3_TX_DEFAULTS)
 
     vm_state = chain.get_vm().state
     contract_address = None
@@ -486,10 +519,9 @@ def set_delegator_function(addr: str, chain: MiningChain) -> None:
     computation = vm_state.get_computation(
         message,
         transaction_context).apply_message()
-    chain.get_vm().state.account_db.make_state_root()
-    chain.get_vm().state.account_db.persist()
 
-    print(encode_hex(delegator))
+    print('output: ')
+    print(encode_hex(computation.output))
 
 def get_delegatee_function(addr: str, chain: MiningChain) -> None:
     w3_tx = stamina.functions.getDelegatee(delegator).buildTransaction(W3_TX_DEFAULTS)
@@ -547,51 +579,51 @@ def get_stamina_function(addr: str, chain: MiningChain) -> None:
     print(encode_hex(computation.output))
 
 def substract_stamina_function(addr: str, chain: MiningChain) -> None:
-    w3_tx = stamina.functions.subtractStamina(delegatee, 10).buildTransaction(W3_TX_DEFAULTS)
-
-    vm_state = chain.get_vm().state
-    contract_address = None
-    # transaction_context = BaseTransactionContext(0, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-    transaction_context = vm_state.get_transaction_context_class()(
-        gas_price=0,
-        origin=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xad',
-    )
-
-    # TODO: gas, sender
-    message = Message(
-        gas=DEFAULT_GAS_LIMIT,
-        to=addr,
-        sender=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-        value=0,
-        data=decode_hex(w3_tx['data']),
-        code=code,
-        create_address=contract_address,
-    )
-
-    computation = vm_state.get_computation(
-        message,
-        transaction_context).apply_message()
-    chain.get_vm().state.account_db.make_state_root()
-
-    assert computation.is_success
-
-    # w3_tx = stamina.functions.getStamina(delegatee).buildTransaction(W3_TX_DEFAULTS)
+    # w3_tx = stamina.functions.subtractStamina(delegatee, 10).buildTransaction(W3_TX_DEFAULTS)
     #
-    # # gas_price is gasPrice field
-    # tx = new_transaction(
-    #     vm=chain.get_vm(),
-    #     private_key=FUNDED_ADDRESS_PRIVATE_KEY,
-    #     from_=FUNDED_ADDRESS,
-    #     to=addr,
-    #     amount=0,
-    #     gas=DEFAULT_GAS_LIMIT,
-    #     data=decode_hex(w3_tx['data']),
+    # vm_state = chain.get_vm().state
+    # contract_address = None
+    # # transaction_context = BaseTransactionContext(0, b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    # transaction_context = vm_state.get_transaction_context_class()(
+    #     gas_price=0,
+    #     origin=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xad',
     # )
     #
-    # block, receipt, computation = chain.apply_transaction(tx)
+    # # TODO: gas, sender
+    # message = Message(
+    #     gas=DEFAULT_GAS_LIMIT,
+    #     to=addr,
+    #     sender=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+    #     value=0,
+    #     data=decode_hex(w3_tx['data']),
+    #     code=code,
+    #     create_address=contract_address,
+    # )
+    #
+    # computation = vm_state.get_computation(
+    #     message,
+    #     transaction_context).apply_message()
+    # chain.get_vm().state.account_db.make_state_root()
     #
     # assert computation.is_success
-    # print(encode_hex(computation.output))
+
+    w3_tx = stamina.functions.getStamina(delegatee).buildTransaction(W3_TX_DEFAULTS)
+
+    # gas_price is gasPrice field
+    tx = new_transaction(
+        vm=chain.get_vm(),
+        private_key=FUNDED_ADDRESS_PRIVATE_KEY,
+        from_=FUNDED_ADDRESS,
+        to=addr,
+        amount=0,
+        gas=DEFAULT_GAS_LIMIT,
+        data=decode_hex(w3_tx['data']),
+    )
+
+    block, receipt, computation = chain.apply_transaction(tx)
+
+    assert computation.is_success
+    print(encode_hex(computation.output))
 
 
 if __name__ == '__main__':

@@ -410,6 +410,9 @@ class AccountDB(BaseAccountDB):
         return self.state_root
 
     def persist(self) -> None:
+        storage = self.get_storage(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xad', 88691040563329312701288304733447161960431434243849378598605341158752128406617)
+        print('storage')
+        print(storage)
         self.make_state_root()
         self._batchtrie.commit(apply_deletes=False)
         self._batchdb.commit(apply_deletes=True)

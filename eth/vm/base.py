@@ -26,6 +26,9 @@ from eth_hash.auto import keccak
 from eth.consensus.pow import (
     check_pow,
 )
+from eth.utils.hexadecimal import (
+    encode_hex,
+)
 from eth.constants import (
     GENESIS_PARENT_HASH,
     MAX_PREV_HEADER_DEPTH,

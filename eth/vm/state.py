@@ -218,6 +218,7 @@ class BaseState(Configurable, ABC):
         """
         if self.state_root != BLANK_ROOT_HASH and not self.account_db.has_root(self.state_root):
             raise StateRootNotFound(self.state_root)
+
         computation = self.execute_transaction(transaction)
         state_root = self.account_db.make_state_root()
         return state_root, computation
@@ -266,7 +267,6 @@ class BaseTransactionExecutor(ABC):
         self.vm_state = vm_state
 
     def __call__(self, transaction):
-        # TODO: 여기서 delegatee 체크하면 될려나?
         valid_transaction = self.validate_transaction(transaction)
         message = self.build_evm_message(valid_transaction)
         computation = self.build_computation(message, valid_transaction)
