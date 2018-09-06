@@ -406,7 +406,7 @@ def run() -> None:
     set_delegator_function(decode_hex(stamina_address), chain)
     # get_delegatee_function(decode_hex(stamina_address), chain)
     get_stamina_function(decode_hex(stamina_address), chain)
-    # get_stamina_function(decode_hex(stamina_address), chain)
+    get_stamina_function(decode_hex(stamina_address), chain)
     # substract_stamina_function(decode_hex(stamina_address), chain)
     # get_stamina_function(decode_hex(stamina_address), chain)
 
@@ -494,7 +494,7 @@ def get_delegatee_function(addr: str, chain: MiningChain) -> None:
     )
 
     block, receipt, computation = chain.apply_transaction(tx)
-    print(computation.output)
+    # print(computation.output)
     assert computation.is_success
 
 def get_stamina_function(addr: str, chain: MiningChain) -> None:
@@ -512,7 +512,7 @@ def get_stamina_function(addr: str, chain: MiningChain) -> None:
 
     block, receipt, computation = chain.apply_transaction(tx)
     assert computation.is_success
-    print(int(encode_hex(computation.output), 0))
+    # print(int(encode_hex(computation.output), 0))
 
 def substract_stamina_function(addr: str, chain: MiningChain) -> None:
     w3_tx = stamina.functions.subtractStamina(delegatee, 10).buildTransaction(W3_TX_DEFAULTS)

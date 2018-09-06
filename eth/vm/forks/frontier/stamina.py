@@ -113,3 +113,30 @@ def subtract_stamina(vm_state, delegatee, amount):
         transaction_context).apply_message()
 
     assert computation.is_success
+
+def add_stamina(vm_state, delegatee, amount):
+    contract_address = None
+    transaction_context = BaseTransactionContext(0, delegatee)
+
+    # NOTE: uint not work, uint256 work
+    encoded_function_signature = keccak('addStamina(address,uint256)'.encode())
+    function_signature = encoded_function_signature[0:4]
+    first_encoded_parameter = encode_single('address', delegatee)
+    second_encoded_paramter = encode_single('uint', amount)
+    data = function_signature + first_encoded_parameter + second_encoded_paramter
+
+    message = Message(
+        gas=180000000,
+        to=stamina,
+        sender=b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+        value=0,
+        data=data,
+        code=code,
+        create_address=contract_address,
+    )
+
+    computation = vm_state.get_computation(
+        message,
+        transaction_context).apply_message()
+
+    assert computation.is_success

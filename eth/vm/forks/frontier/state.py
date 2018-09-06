@@ -36,6 +36,7 @@ from .stamina import (
     get_delegatee,
     get_stamina,
     subtract_stamina,
+    add_stamina,
 )
 
 # TODO: no expandability
@@ -68,13 +69,16 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
     def build_evm_message(self, transaction):
 
         gas_fee = transaction.gas * transaction.gas_price
-
+        stamina1 = get_stamina(self.vm_state, self.delegatee)
+        print(stamina1)
         # Buy Gas
         if self.delegatee_exist:
             subtract_stamina(self.vm_state, self.delegatee, gas_fee)
         else:
             self.vm_state.account_db.delta_balance(transaction.sender, -1 * gas_fee)
 
+        stamina2 = get_stamina(self.vm_state, self.delegatee)
+        print(stamina2)
         # Increment Nonce
         self.vm_state.account_db.increment_nonce(transaction.sender)
 
@@ -173,7 +177,12 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
                 encode_hex(computation.msg.sender),
             )
 
-            self.vm_state.account_db.delta_balance(computation.msg.sender, gas_refund_amount)
+            if self.delegatee_exist:
+                add_stamina(self.vm_state, self.delegatee, gas_refund_amount)
+                stamina3 = get_stamina(self.vm_state, self.delegatee)
+                print(stamina3)
+            else:
+                self.vm_state.account_db.delta_balance(computation.msg.sender, gas_refund_amount)
 
         # Miner Fees
         transaction_fee = \
