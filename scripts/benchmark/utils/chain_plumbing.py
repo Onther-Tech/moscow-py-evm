@@ -65,7 +65,7 @@ GENESIS_PARAMS = {
     'receipt_root': constants.BLANK_ROOT_HASH,
     'difficulty': 1,
     'block_number': constants.GENESIS_BLOCK_NUMBER,
-    'gas_limit': constants.GENESIS_GAS_LIMIT,
+    'gas_limit': 99999999999999,
     'extra_data': constants.GENESIS_EXTRA_DATA,
     'nonce': constants.GENESIS_NONCE
 }
