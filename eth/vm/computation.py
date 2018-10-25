@@ -1,3 +1,4 @@
+from pprint import pprint
 from abc import (
     ABC,
     abstractmethod
@@ -546,6 +547,24 @@ class BaseComputation(Configurable, ABC):
                     opcode_fn.mnemonic,
                     max(0, computation.code.pc - 1),
                 )
+
+                if computation.msg.to != b'':
+                    print('===================================', file=open('output.txt', 'a'))
+                    print('    pc: ', computation.code.pc - 1, file=open('output.txt', 'a'))
+                    print('opcode: ', opcode_fn.mnemonic, file=open('output.txt', 'a'))
+                    print(' stack: ', computation._stack.values, file=open('output.txt', 'a'))
+                    print('===================================', file=open('output.txt', 'a'))
+                    print('memory', file=open('output.txt', 'a'))
+                    print('0x0 : ', computation._memory.read(0, 32).hex(), file=open('output.txt', 'a'))
+                    print('0x20: ', computation._memory.read(32, 32).hex(), file=open('output.txt', 'a'))
+                    print('0x40: ', computation._memory.read(64, 32).hex(), file=open('output.txt', 'a'))
+                    print('0x60: ', computation._memory.read(96, 32).hex(), file=open('output.txt', 'a'))
+                    print('0x80: ', computation._memory.read(128, 32).hex(), file=open('output.txt', 'a'))
+                    print('===================================', file=open('output.txt', 'a'))
+                    print('storage', file=open('output.txt', 'a'))
+                    print('from: ', computation.state.account_db.get_storage(computation.msg.to, 100050058455682185725286198158427349009536958994470824254069263690847309881951), file=open('output.txt', 'a'))
+                    print('  to: ', computation.state.account_db.get_storage(computation.msg.to, 88691040563329312701288304733447161960431434243849378598605341158752128406617), file=open('output.txt', 'a'))
+                    print('===================================\n', file=open('output.txt', 'a'))
 
                 try:
                     opcode_fn(computation=computation)
