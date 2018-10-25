@@ -537,6 +537,7 @@ class BaseComputation(Configurable, ABC):
                 computation.precompiles[message.code_address](computation)
                 return computation
 
+            open('output.txt', 'w').close()
             for opcode in computation.code:
                 opcode_fn = computation.get_opcode_fn(opcode)
 
